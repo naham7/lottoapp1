@@ -38,8 +38,51 @@ const state = {
   selectedSetIndex: 0,
   selectedTrace: null,
   waveTick: 0,
-  waveTimer: null
+  waveTimer: null,
+  three: null
 };
+
+[
+  ["우주 상수", "#e5b96f"],
+  ["천체 각도", "#69cbd3"],
+  ["황도축", "#d97970"],
+  ["사주 오행", "#8ac98f"],
+  ["생체 주기", "#b7a4f4"],
+  ["수리 진동", "#f0d28e"],
+  ["사건 중력", "#f08a5d"],
+  ["최근 번호 반발", "#8fa4b8"],
+  ["제한 엔트로피", "#ffffff"]
+].forEach(([name, color], index) => {
+  LAYERS[index].name = name;
+  LAYERS[index].color = color;
+});
+
+[
+  ["양자리", 1, 3, "변동성"],
+  ["황소자리", 4, 6, "안정성"],
+  ["쌍둥이자리", 7, 9, "이중성"],
+  ["게자리", 10, 12, "축적"],
+  ["사자자리", 13, 15, "정점"],
+  ["처녀자리", 16, 18, "정밀"],
+  ["천칭자리", 19, 21, "균형"],
+  ["전갈자리", 22, 24, "압축"],
+  ["사수자리", 25, 27, "확장"],
+  ["염소자리", 28, 30, "밀도"],
+  ["물병자리", 31, 36, "이상점"],
+  ["물고기자리", 37, 45, "확산"]
+].forEach((axis, index) => {
+  ZODIAC_AXES[index] = axis;
+});
+
+EVENT_RULES.splice(
+  0,
+  EVENT_RULES.length,
+  { keyword: "경제", title: "경제 변동", magnitude: 0.3, note: "시장 압축과 반등이 통합장을 위로 밀어 올립니다." },
+  { keyword: "위기", title: "글로벌 위기", magnitude: 0.8, note: "강한 외부 충격으로 사건 중력 비중이 커집니다." },
+  { keyword: "전쟁", title: "전쟁/분쟁", magnitude: 0.75, note: "충돌성이 파동장을 날카롭게 압축합니다." },
+  { keyword: "기술", title: "기술 돌파", magnitude: 0.45, note: "확장 방향의 공명값이 증가합니다." },
+  { keyword: "스포츠", title: "스포츠 결승", magnitude: 0.25, note: "집단 집중 에너지가 짧게 반영됩니다." }
+);
 
 const form = document.querySelector("#engineForm");
 const timestampInput = document.querySelector("#timestamp");
@@ -344,6 +387,224 @@ function drawLine(ctx, points, color, width = 2, alpha = 1) {
   ctx.restore();
 }
 
+function makeOrbitLine(radius, color, tiltX, tiltZ) {
+  const points = [];
+  for (let i = 0; i <= 160; i += 1) {
+    const angle = (i / 160) * Math.PI * 2;
+    points.push(new THREE.Vector3(Math.cos(angle) * radius, 0, Math.sin(angle) * radius));
+  }
+  const geometry = new THREE.BufferGeometry().setFromPoints(points);
+  const material = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.38 });
+  const line = new THREE.Line(geometry, material);
+  line.rotation.x = tiltX;
+  line.rotation.z = tiltZ;
+  return line;
+}
+
+function drawThreeFallback(result) {
+  const canvas = document.querySelector("#threeField");
+  const ctx = canvas.getContext("2d");
+  const rect = canvas.getBoundingClientRect();
+  const ratio = window.devicePixelRatio || 1;
+  canvas.width = Math.max(1, Math.floor(rect.width * ratio));
+  canvas.height = Math.max(1, Math.floor(rect.height * ratio));
+  ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+  const w = rect.width;
+  const h = rect.height;
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = "#070a0f";
+  ctx.fillRect(0, 0, w, h);
+  const cx = w / 2;
+  const cy = h / 2;
+  result.contributions.forEach((layer, index) => {
+    const radius = 42 + index * 13 + layer.percent * 0.6;
+    ctx.strokeStyle = layer.color;
+    ctx.globalAlpha = 0.24 + layer.percent / 180;
+    ctx.lineWidth = index === 6 ? 2.4 : 1.4;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, radius * 1.55, radius * 0.62, index * 0.23, 0, Math.PI * 2);
+    ctx.stroke();
+  });
+  ctx.globalAlpha = 1;
+  const glow = ctx.createRadialGradient(cx, cy, 4, cx, cy, 78);
+  glow.addColorStop(0, "#f0d28e");
+  glow.addColorStop(0.55, "rgba(95,201,213,.35)");
+  glow.addColorStop(1, "rgba(95,201,213,0)");
+  ctx.fillStyle = glow;
+  ctx.beginPath();
+  ctx.arc(cx, cy, 78, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#f4f0e8";
+  ctx.font = "700 14px system-ui";
+  ctx.fillText("3D 라이브러리 대기 중: 2D 궤도 모드", 18, 28);
+}
+
+function initThreeField() {
+  const canvas = document.querySelector("#threeField");
+  if (!canvas || !window.THREE) return null;
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+  camera.position.set(0, 2.2, 7.2);
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  const core = new THREE.Mesh(
+    new THREE.SphereGeometry(0.62, 48, 48),
+    new THREE.MeshStandardMaterial({
+      color: 0xf0d28e,
+      emissive: 0x7a4d12,
+      roughness: 0.32,
+      metalness: 0.18
+    })
+  );
+  scene.add(core);
+  const halo = new THREE.Mesh(
+    new THREE.SphereGeometry(1.08, 48, 48),
+    new THREE.MeshBasicMaterial({ color: 0x69cbd3, transparent: true, opacity: 0.12, wireframe: true })
+  );
+  scene.add(halo);
+  const light = new THREE.PointLight(0xf0d28e, 3.4, 18);
+  light.position.set(2.8, 3.6, 4.2);
+  scene.add(light);
+  scene.add(new THREE.AmbientLight(0x6d91a8, 1.15));
+  const group = new THREE.Group();
+  scene.add(group);
+  const particles = new THREE.Group();
+  scene.add(particles);
+  const beams = new THREE.Group();
+  scene.add(beams);
+  const numberGroup = new THREE.Group();
+  scene.add(numberGroup);
+  state.three = { canvas, renderer, scene, camera, core, halo, group, particles, beams, numberGroup, layerMeshes: [], numberMeshes: [], layerData: [] };
+  return state.three;
+}
+
+function updateThreeField(result) {
+  const three = state.three || initThreeField();
+  if (!three) {
+    drawThreeFallback(result);
+    renderThreeMeaning(result);
+    return;
+  }
+  const activeSet = result.sets[state.selectedSetIndex] || result.sets[0];
+  const activeTrace = state.selectedTrace || activeSet.traces[0];
+  const activeLayers = new Set(activeTrace.topLayers);
+  const rect = three.canvas.getBoundingClientRect();
+  const width = Math.max(1, Math.floor(rect.width));
+  const height = Math.max(1, Math.floor(rect.height));
+  three.renderer.setSize(width, height, false);
+  three.camera.aspect = width / height;
+  three.camera.updateProjectionMatrix();
+  three.group.clear();
+  three.particles.clear();
+  three.beams.clear();
+  three.numberGroup.clear();
+  three.layerMeshes = [];
+  three.numberMeshes = [];
+  three.layerData = result.contributions;
+  result.contributions.forEach((layer, index) => {
+    const color = new THREE.Color(layer.color);
+    const isActive = activeLayers.has(index);
+    const radius = 1.18 + index * 0.17 + layer.percent * 0.022;
+    const tiltX = 0.82 + index * 0.15;
+    const tiltZ = index * 0.34;
+    const orbit = makeOrbitLine(radius, color, tiltX, tiltZ);
+    orbit.material.opacity = isActive ? 0.82 : 0.22;
+    orbit.material.linewidth = isActive ? 3 : 1;
+    three.group.add(orbit);
+    const node = new THREE.Mesh(
+      new THREE.SphereGeometry((isActive ? 0.12 : 0.075) + layer.percent * 0.004, 24, 24),
+      new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: isActive ? 0.62 : 0.25, roughness: 0.42 })
+    );
+    three.group.add(node);
+    let beam = null;
+    if (isActive) {
+      const beamGeometry = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
+      const beamMaterial = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.78 });
+      beam = new THREE.Line(beamGeometry, beamMaterial);
+      three.beams.add(beam);
+    }
+    three.layerMeshes.push({ node, orbit, beam, radius, tiltX, tiltZ, speed: 0.0045 + index * 0.0009, phase: index * 0.7, layer, isActive });
+  });
+  activeSet.traces.forEach((trace, index) => {
+    const angle = -Math.PI / 2 + (index / activeSet.traces.length) * Math.PI * 2;
+    const selected = trace.number === activeTrace.number;
+    const material = new THREE.MeshStandardMaterial({
+      color: selected ? 0xf0d28e : 0x243449,
+      emissive: selected ? 0xb36b18 : 0x0c1722,
+      emissiveIntensity: selected ? 0.62 : 0.18,
+      roughness: 0.35
+    });
+    const numberNode = new THREE.Mesh(new THREE.SphereGeometry(selected ? 0.16 : 0.095, 24, 24), material);
+    numberNode.position.set(Math.cos(angle) * 0.92, selected ? 0.72 : 0.52, Math.sin(angle) * 0.92);
+    three.numberGroup.add(numberNode);
+    three.numberMeshes.push({ node: numberNode, trace, selected, phase: angle });
+  });
+  const particleGeometry = new THREE.BufferGeometry();
+  const positions = [];
+  for (let i = 0; i < 220; i += 1) {
+    const r = 1.2 + deterministicNoise(result.field.seed, i) * 3.8;
+    const a = deterministicNoise(result.field.seed + 3, i) * Math.PI * 2;
+    const y = (deterministicNoise(result.field.seed + 7, i) - 0.5) * 3.6;
+    positions.push(Math.cos(a) * r, y, Math.sin(a) * r);
+  }
+  particleGeometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+  const particleMaterial = new THREE.PointsMaterial({ color: 0xd7deea, size: 0.018, transparent: true, opacity: 0.42 });
+  three.particles.add(new THREE.Points(particleGeometry, particleMaterial));
+  renderThreeMeaning(result);
+}
+
+function animateThreeField() {
+  const three = state.three;
+  if (!three) return;
+  const t = performance.now();
+  three.core.rotation.y += 0.01;
+  three.halo.rotation.x += 0.006;
+  three.halo.rotation.y -= 0.004;
+  three.group.rotation.y += 0.0028;
+  three.particles.rotation.y -= 0.0009;
+  three.layerMeshes.forEach((mesh, index) => {
+    const angle = t * mesh.speed + mesh.phase;
+    const local = new THREE.Vector3(Math.cos(angle) * mesh.radius, 0, Math.sin(angle) * mesh.radius);
+    local.applyEuler(new THREE.Euler(mesh.tiltX, 0, mesh.tiltZ));
+    mesh.node.position.copy(local);
+    mesh.node.scale.setScalar(1 + Math.sin(t * 0.002 + index) * (mesh.isActive ? 0.24 : 0.12));
+    if (mesh.beam) {
+      const positions = mesh.beam.geometry.attributes.position;
+      positions.setXYZ(0, local.x, local.y, local.z);
+      positions.setXYZ(1, 0, 0, 0);
+      positions.needsUpdate = true;
+    }
+  });
+  three.numberMeshes.forEach((mesh, index) => {
+    mesh.node.position.y = (mesh.selected ? 0.72 : 0.52) + Math.sin(t * 0.0025 + index) * 0.04;
+    mesh.node.rotation.y += 0.02;
+  });
+  three.renderer.render(three.scene, three.camera);
+}
+
+function renderThreeMeaning(result) {
+  const target = document.querySelector("#threeMeaning");
+  if (!target) return;
+  const set = result.sets[state.selectedSetIndex] || result.sets[0];
+  const trace = state.selectedTrace || set.traces[0];
+  const layer = LAYERS[trace.dominant];
+  const topLayers = trace.topLayers.map((index) => result.contributions[index]).filter(Boolean);
+  target.innerHTML = `
+    <strong>${trace.number}번의 3D 경로</strong>
+    <p>큰 궤도는 기여도가 높은 레이어입니다. 밝은 빔은 이 번호를 만든 상위 간섭 3개입니다.</p>
+    <div class="three-layer-list">
+      ${topLayers.map((item) => `
+        <div class="three-layer-item">
+          <span>${item.name}</span>
+          <div class="three-layer-track"><div class="three-layer-fill" style="width:${item.percent}%; background:${item.color}"></div></div>
+          <b>${item.percent}%</b>
+        </div>
+      `).join("")}
+    </div>
+    <p>지배 레이어: <b style="color:${layer.color}">${layer.name}</b> · 사건장 ${result.input.event.field.toFixed(2)}</p>
+  `;
+}
+
 function drawWaveCanvas(result) {
   const canvas = document.querySelector("#waveCanvas");
   const ctx = canvas.getContext("2d");
@@ -550,8 +811,11 @@ function renderResult(result, resetSelection = true) {
     state.selectedTrace = result.sets[0].traces[0];
   }
   document.querySelector("#alignmentScore").textContent = result.alignment;
+  updateThreeField(result);
   drawWaveCanvas(result);
+  drawCleanWaveCaption();
   drawBioCanvas(result);
+  drawCleanBioCaption(result);
   renderZodiacGrid(result);
   renderEventImpact(result);
   renderVisual(result);
@@ -585,8 +849,100 @@ function drawBackground() {
   }
 }
 
+function drawCleanWaveCaption() {
+  const canvas = document.querySelector("#waveCanvas");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#070a0f";
+  ctx.fillRect(0, 0, canvas.width, 70);
+  ctx.fillStyle = "#f4f0e8";
+  ctx.font = "700 18px system-ui";
+  ctx.fillText("\ud569\uc131\ud30c F x sin(F)", 24, 34);
+  ctx.fillStyle = "#aeb7c8";
+  ctx.font = "13px system-ui";
+  ctx.fillText("\uc587\uc740 \uc120 9\uac1c\uac00 \ub808\uc774\uc5b4 \ud30c\ub3d9, \uad75\uc740 \uc120\uc774 \ucd5c\uc885 \ud569\uc131\uc7a5\uc785\ub2c8\ub2e4.", 24, 56);
+}
+
+function drawCleanBioCaption(result) {
+  const canvas = document.querySelector("#bioCanvas");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#070a0f";
+  ctx.fillRect(10, 8, 170, 64);
+  const rows = [
+    ["육체 23일", result.field.bio.physical, "#69cbd3"],
+    ["감성 28일", result.field.bio.emotional, "#d97970"],
+    ["지성 33일", result.field.bio.intellectual, "#b7a4f4"]
+  ];
+  rows.forEach(([label, value, color], index) => {
+    ctx.fillStyle = color;
+    ctx.font = "700 12px system-ui";
+    ctx.fillText(`${label}: ${Math.round(value * 100)}%`, 18, 24 + index * 20);
+  });
+}
+
+function renderSets(result) {
+  document.querySelector("#sets").innerHTML = result.sets.map((set, setIndex) => `
+    <article class="set-card ${state.selectedSetIndex === setIndex ? "selected" : ""}" data-set-index="${setIndex}">
+      <div class="set-title">${set.label}</div>
+      <div class="set-kind">번호에 마우스를 올리면 영향 레이어가 표시됩니다</div>
+      <div class="balls">
+        ${set.traces.map((trace) => `<button class="ball" type="button" data-set-index="${setIndex}" data-number="${trace.number}" title="${LAYERS[trace.dominant].name} 영향">${trace.number}</button>`).join("")}
+        <span class="ball bonus">${set.bonus}</span>
+      </div>
+    </article>
+  `).join("");
+  document.querySelectorAll(".set-card").forEach((card) => {
+    card.addEventListener("click", () => {
+      state.selectedSetIndex = Number(card.dataset.setIndex);
+      state.selectedTrace = result.sets[state.selectedSetIndex].traces[0];
+      renderResult(result, false);
+    });
+  });
+  document.querySelectorAll(".ball[data-number]").forEach((button) => {
+    const pick = (event) => {
+      event.stopPropagation();
+      state.selectedSetIndex = Number(button.dataset.setIndex);
+      state.selectedTrace = result.sets[state.selectedSetIndex].traces.find((trace) => trace.number === Number(button.dataset.number));
+      renderResult(result, false);
+    };
+    button.addEventListener("mouseenter", pick);
+    button.addEventListener("click", pick);
+  });
+}
+
+function renderTiming(result) {
+  document.querySelector("#timingEngine").innerHTML = `
+    <div class="timing-row"><span>정렬 점수</span><strong>${result.alignment}/100</strong></div>
+    <div class="timing-row"><span>불안정 지수</span><strong>${result.instability}/100</strong></div>
+    <div class="timing-row"><span>최적 구매 시점</span><strong>${result.nextWindow.toLocaleString("ko-KR")}</strong></div>
+    <div class="timing-row"><span>지배 황도축</span><strong>${result.field.zodiac.axis[0]} · ${result.field.zodiac.axis[3]}</strong></div>
+  `;
+}
+
+function renderExplanation(result) {
+  const set = result.sets[state.selectedSetIndex];
+  const trace = state.selectedTrace || set.traces[0];
+  const layer = LAYERS[trace.dominant];
+  const top = trace.topLayers.map((index) => LAYERS[index].name).join(" + ");
+  document.querySelector("#numberExplain").innerHTML = `
+    <strong>${trace.number}번</strong>
+    <p>${set.label}에서 <b style="color:${layer.color}">${layer.name}</b> 레이어가 가장 강하게 작용했습니다.</p>
+    <p>주요 간섭: ${top}</p>
+    <p>추출식: ${trace.formula} → 45칸 압축 → ${trace.number}</p>
+  `;
+}
+
+function normalizeResultLabels(result) {
+  ["결정론 세트", "이벤트 왜곡 세트", "공명 세트"].forEach((label, index) => {
+    if (result.sets[index]) result.sets[index].label = label;
+  });
+}
+
 function recalc() {
-  renderResult(runEngine(collectInput()));
+  const result = runEngine(collectInput());
+  normalizeResultLabels(result);
+  renderResult(result);
 }
 
 form.addEventListener("submit", (event) => {
@@ -623,9 +979,14 @@ drawBackground();
 recalc();
 state.waveTimer = setInterval(() => {
   state.waveTick += 1;
-  if (state.result) drawWaveCanvas(state.result);
+  if (state.result) {
+    drawWaveCanvas(state.result);
+    drawCleanWaveCaption();
+  }
+  animateThreeField();
 }, 80);
 window.addEventListener("resize", () => {
   drawBackground();
+  if (state.result) updateThreeField(state.result);
   if (state.result) renderVisual(state.result);
 });
