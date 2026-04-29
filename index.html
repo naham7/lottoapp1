@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>UFCE | 엔트로픽 로또앱</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <canvas id="fieldCanvas" aria-hidden="true"></canvas>
+    <main class="shell">
+      <section class="app-frame" aria-label="엔트로픽 로또앱">
+        <aside class="panel control-panel">
+          <div class="brand">
+            <span class="mark">UFCE</span>
+            <div>
+              <h1>엔트로픽 로또앱</h1>
+              <p>출생 신호 + 시간 + 사건장을 하나의 파동으로 접습니다</p>
+            </div>
+          </div>
+
+          <form id="engineForm" class="form-grid">
+            <section class="field-block first-block">
+              <div class="block-head">
+                <span>내 출생 신호</span>
+              </div>
+              <label>
+                생년월일 직접 입력
+                <input id="birthDate" type="text" value="1995-10-11" inputmode="numeric" placeholder="예: 1995-10-11" required />
+              </label>
+              <label>
+                태어난 시간 직접 입력
+                <input id="birthTime" type="text" value="03:33" inputmode="numeric" placeholder="예: 03:33 / 모르면 비워두기" />
+              </label>
+            </section>
+
+            <section class="field-block">
+              <div class="block-head">
+                <span>기준 시각</span>
+              </div>
+              <input id="timestamp" type="datetime-local" step="0.001" aria-label="기준 시각" />
+              <div class="quick-row">
+                <button type="button" id="useNow">지금</button>
+                <button type="button" id="useDrawTime">오늘 20:35</button>
+                <button type="button" id="useNextSaturday">다음 토요일</button>
+              </div>
+            </section>
+
+            <section class="field-block">
+              <div class="block-head">
+                <span>주요 사건 직접 입력</span>
+              </div>
+              <label>
+                사건장 문장
+                <textarea id="majorEventText" rows="4" spellcheck="false" placeholder="예: 경제 변동, 글로벌 위기, 기술 돌파, 스포츠 결승">경제 변동</textarea>
+              </label>
+              <p id="eventSummary" class="hint">입력한 사건을 엔진이 내부 중력값으로 변환합니다.</p>
+            </section>
+
+            <section class="field-block">
+              <div class="block-head">
+                <span>최근 번호 반발장</span>
+                <button class="icon-button" type="button" id="sampleDraws" title="예시 번호 적용" aria-label="예시 번호 적용">↻</button>
+              </div>
+              <textarea id="recentDraws" rows="4" spellcheck="false">3, 7, 12, 19, 33, 41
+5, 11, 18, 24, 32, 45
+2, 9, 16, 28, 36, 44</textarea>
+            </section>
+
+            <button class="primary" type="submit">번호 좌표 생성</button>
+          </form>
+        </aside>
+
+        <section class="panel result-panel">
+          <div class="status-row">
+            <div>
+              <span class="eyebrow">통합 파동장 붕괴</span>
+              <h2 id="headline">좌표장이 번호로 접혔습니다</h2>
+            </div>
+            <div class="score-card">
+              <span>정렬도</span>
+              <strong id="alignmentScore">--</strong>
+            </div>
+          </div>
+
+          <section class="visual-module">
+            <div class="module-title">
+              <h3>통합 파동장</h3>
+              <span>9개 레이어 → 합성파 → 번호</span>
+            </div>
+            <canvas id="waveCanvas" class="viz-canvas" width="900" height="260" aria-label="통합 파동장 시각화"></canvas>
+          </section>
+
+          <div class="visual-grid">
+            <section class="module">
+              <h3>생체 주기 파동</h3>
+              <canvas id="bioCanvas" class="small-canvas" width="420" height="210" aria-label="생체 주기 파동"></canvas>
+            </section>
+            <section class="module">
+              <h3>황도 12궁 그리드</h3>
+              <div id="zodiacGrid" class="zodiac-grid"></div>
+            </section>
+          </div>
+
+          <section class="visual-module">
+            <div class="module-title">
+              <h3>사건 중력 영향</h3>
+              <span id="eventImpactLabel">경제 변동 분석</span>
+            </div>
+            <div id="eventImpact" class="event-impact"></div>
+          </section>
+
+          <section class="visual-module">
+            <div class="module-title">
+              <h3>번호가 나타나는 과정</h3>
+              <span id="activeSetLabel">결정론 세트</span>
+            </div>
+            <div class="field-visual-wrap">
+              <svg id="fieldVisual" viewBox="0 0 760 430" role="img" aria-label="번호 생성 시각화"></svg>
+            </div>
+          </section>
+
+          <div id="sets" class="sets"></div>
+
+          <div class="analysis-grid">
+            <section class="module">
+              <h3>레이어 기여도</h3>
+              <div id="contributionTable" class="bars"></div>
+            </section>
+            <section class="module">
+              <h3>타이밍 엔진</h3>
+              <div id="timingEngine" class="timing"></div>
+            </section>
+          </div>
+
+          <section class="module">
+            <h3>선택한 번호 설명</h3>
+            <div id="numberExplain" class="number-explain">번호 공에 마우스를 올리거나 누르면 이유가 표시됩니다.</div>
+          </section>
+
+          <section class="module narrative">
+            <h3>해석</h3>
+            <p id="narrativeText"></p>
+          </section>
+        </section>
+      </section>
+    </main>
+    <script src="app.js"></script>
+  </body>
+</html>
