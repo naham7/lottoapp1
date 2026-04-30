@@ -135,6 +135,28 @@ function normalizeBirthTime(text) {
   return `${pad(hour)}:${pad(minute)}`;
 }
 
+function formatBirthDateInput(value) {
+  const digits = value.replace(/\D/g, "").slice(0, 8);
+  if (digits.length <= 4) return digits;
+  const year = digits.slice(0, 4);
+  const rawMonth = digits.slice(4, 6);
+  const month = rawMonth.length === 2 ? pad(Math.min(12, Math.max(1, Number(rawMonth)))) : rawMonth;
+  if (digits.length <= 6) return `${year}-${month}`;
+  const rawDay = digits.slice(6);
+  const day = rawDay.length === 2 ? pad(Math.min(31, Math.max(1, Number(rawDay)))) : rawDay;
+  return `${year}-${month}-${day}`;
+}
+
+function formatBirthTimeInput(value) {
+  const digits = value.replace(/\D/g, "").slice(0, 4);
+  if (digits.length <= 2) {
+    return digits.length === 2 ? pad(Math.min(23, Number(digits))) : digits;
+  }
+  const hour = pad(Math.min(23, Number(digits.slice(0, 2))));
+  const minute = digits.length === 4 ? pad(Math.min(59, Number(digits.slice(2)))) : digits.slice(2);
+  return `${hour}:${minute}`;
+}
+
 function dateParts(dateText) {
   const [year, month, day] = normalizeBirthDate(dateText).split("-").map(Number);
   return { year, month, day };
@@ -948,9 +970,20 @@ function recalc() {
 form.addEventListener("submit", (event) => {
   event.preventDefault();
   recalc();
+  document.querySelector("#sets")?.scrollIntoView({ behavior: "smooth", block: "start" });
 });
 
-["birthDate", "birthTime", "majorEventText", "recentDraws"].forEach((id) => {
+document.querySelector("#birthDate").addEventListener("input", (event) => {
+  event.target.value = formatBirthDateInput(event.target.value);
+  recalc();
+});
+
+document.querySelector("#birthTime").addEventListener("input", (event) => {
+  event.target.value = formatBirthTimeInput(event.target.value);
+  recalc();
+});
+
+["majorEventText", "recentDraws"].forEach((id) => {
   document.querySelector(`#${id}`).addEventListener("input", recalc);
 });
 
@@ -973,6 +1006,25 @@ document.querySelector("#useNextSaturday").addEventListener("click", () => {
   setTimestamp(nextSaturdayDrawTime());
   recalc();
 });
+
+const bgMusic = document.querySelector("#bgMusic");
+const musicToggle = document.querySelector("#musicToggle");
+if (bgMusic && musicToggle) {
+  bgMusic.volume = 0.42;
+  musicToggle.addEventListener("click", async () => {
+    if (bgMusic.paused) {
+      try {
+        await bgMusic.play();
+        musicToggle.textContent = "음악 끄기";
+      } catch (error) {
+        musicToggle.textContent = "다시 누르기";
+      }
+    } else {
+      bgMusic.pause();
+      musicToggle.textContent = "음악 켜기";
+    }
+  });
+}
 
 setTimestamp(new Date());
 drawBackground();

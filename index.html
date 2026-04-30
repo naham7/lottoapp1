@@ -9,7 +9,36 @@
   <body>
     <canvas id="fieldCanvas" aria-hidden="true"></canvas>
     <main class="shell">
-      <section class="app-frame" aria-label="엔트로픽 로또앱">
+  <header class="site-hero">
+    <img class="hero-image" src="assets/ad-right-1.jpg" alt="우주 파동 이미지" />
+    <div class="hero-copy">
+      <h1>엔트로픽 로또</h1>
+      <p>우주, 시간, 사건, 생체 리듬이 하나의 숫자장으로 접히는 로또 좌표 엔진</p>
+    </div>
+
+    <div class="music-dock">
+      <button id="musicToggle" type="button">음악 켜기</button>
+      <span class="music-title">다섯번째 계절</span>
+      <audio id="bgMusic" src="assets/music.mp3" loop preload="metadata"></audio>
+    </div>
+  </header>
+
+     
+      <section class="site-layout">
+        <aside class="ad-rail left-rail" aria-label="왼쪽 광고 영역">
+          <a class="ad-slot hero-ad ad-left-1" href="https://leafy-swan-97ce14.netlify.app" target="_blank" rel="noopener">
+            <span>AD</span>
+            <strong>광고 영역</strong>
+            <p>시나리오 사이트로 이동</p>
+          </a>
+          <a class="ad-slot ad-left-2" href="https://subun.netlify.app" target="_blank" rel="noopener">
+            <span>AD</span>
+            <strong>추천 콘텐츠</strong>
+            <p>클릭형 광고 자리</p>
+          </a>
+        </aside>
+
+        <section class="app-frame" aria-label="엔트로픽 로또앱">
         <aside class="panel control-panel">
           <div class="brand">
             <span class="mark">UFCE</span>
@@ -26,11 +55,11 @@
               </div>
               <label>
                 생년월일 직접 입력
-                <input id="birthDate" type="text" value="1995-10-11" inputmode="numeric" placeholder="예: 1995-10-11" required />
+                <input id="birthDate" type="text" value="1995-10-11" inputmode="numeric" maxlength="10" placeholder="예: 1995-10-11" required />
               </label>
               <label>
                 태어난 시간 직접 입력
-                <input id="birthTime" type="text" value="03:33" inputmode="numeric" placeholder="예: 03:33 / 모르면 비워두기" />
+                <input id="birthTime" type="text" value="03:33" inputmode="numeric" maxlength="5" placeholder="예: 03:33" />
               </label>
             </section>
 
@@ -82,6 +111,8 @@
               <strong id="alignmentScore">--</strong>
             </div>
           </div>
+
+          <div id="sets" class="sets top-sets"></div>
 
           <section class="three-module">
             <div class="module-title">
@@ -135,8 +166,6 @@
             </div>
           </section>
 
-          <div id="sets" class="sets"></div>
-
           <div class="analysis-grid">
             <section class="module">
               <h3>레이어 기여도</h3>
@@ -158,6 +187,20 @@
             <p id="narrativeText"></p>
           </section>
         </section>
+        </section>
+
+        <aside class="ad-rail right-rail" aria-label="오른쪽 광고 영역">
+          <a class="ad-slot image-ad ad-right-1" href="https://subun.netlify.app" target="_blank" rel="noopener">
+            <span>AD</span>
+            <strong>우주 배너</strong>
+            <p>시나리오 사이트로 이동</p>
+          </a>
+          <a class="ad-slot ad-right-2" href="http://junghye.shop" target="_blank" rel="noopener">
+            <span>AD</span>
+            <strong>파트너 영역</strong>
+            <p>광고 링크 삽입 가능</p>
+          </a>
+        </aside>
       </section>
     </main>
     <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
