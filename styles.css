@@ -451,6 +451,34 @@ h2 {
   backdrop-filter: blur(14px);
 }
 
+.sets-hidden {
+  display: none;
+}
+
+.sets-close {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid rgba(207, 226, 255, 0.28);
+  border-radius: 50%;
+  background: rgba(7, 13, 24, 0.92);
+  color: var(--text);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.34);
+}
+
+.sets-close:hover {
+  border-color: rgba(242, 199, 107, 0.72);
+  color: var(--gold);
+}
+
 .set-card,
 .module,
 .visual-module,

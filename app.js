@@ -39,7 +39,8 @@ const state = {
   selectedTrace: null,
   waveTick: 0,
   waveTimer: null,
-  three: null
+  three: null,
+  setsHidden: false
 };
 
 [
@@ -761,7 +762,15 @@ function selectNumber(number, result) {
 }
 
 function renderSets(result) {
-  document.querySelector("#sets").innerHTML = result.sets.map((set, setIndex) => `
+  const setsEl = document.querySelector("#sets");
+  setsEl.classList.toggle("sets-hidden", state.setsHidden);
+  if (state.setsHidden) {
+    setsEl.innerHTML = "";
+    return;
+  }
+  setsEl.innerHTML = `
+    <button class="sets-close" type="button" aria-label="번호 세트 닫기">×</button>
+    ${result.sets.map((set, setIndex) => `
     <article class="set-card ${state.selectedSetIndex === setIndex ? "selected" : ""}" data-set-index="${setIndex}">
       <div class="set-title">${set.label}</div>
       <div class="set-kind">번호에 마우스를 올리면 영향 레이어가 표시됩니다</div>
@@ -770,7 +779,11 @@ function renderSets(result) {
         <span class="ball bonus">${set.bonus}</span>
       </div>
     </article>
-  `).join("");
+  `).join("")}`;
+  document.querySelector(".sets-close")?.addEventListener("click", () => {
+    state.setsHidden = true;
+    renderSets(result);
+  });
   document.querySelectorAll(".set-card").forEach((card) => {
     card.addEventListener("click", () => {
       state.selectedSetIndex = Number(card.dataset.setIndex);
@@ -904,7 +917,15 @@ function drawCleanBioCaption(result) {
 }
 
 function renderSets(result) {
-  document.querySelector("#sets").innerHTML = result.sets.map((set, setIndex) => `
+  const setsEl = document.querySelector("#sets");
+  setsEl.classList.toggle("sets-hidden", state.setsHidden);
+  if (state.setsHidden) {
+    setsEl.innerHTML = "";
+    return;
+  }
+  setsEl.innerHTML = `
+    <button class="sets-close" type="button" aria-label="번호 세트 닫기">×</button>
+    ${result.sets.map((set, setIndex) => `
     <article class="set-card ${state.selectedSetIndex === setIndex ? "selected" : ""}" data-set-index="${setIndex}">
       <div class="set-title">${set.label}</div>
       <div class="set-kind">번호에 마우스를 올리면 영향 레이어가 표시됩니다</div>
@@ -913,7 +934,11 @@ function renderSets(result) {
         <span class="ball bonus">${set.bonus}</span>
       </div>
     </article>
-  `).join("");
+  `).join("")}`;
+  document.querySelector(".sets-close")?.addEventListener("click", () => {
+    state.setsHidden = true;
+    renderSets(result);
+  });
   document.querySelectorAll(".set-card").forEach((card) => {
     card.addEventListener("click", () => {
       state.selectedSetIndex = Number(card.dataset.setIndex);
@@ -969,6 +994,7 @@ function recalc() {
 
 form.addEventListener("submit", (event) => {
   event.preventDefault();
+  state.setsHidden = false;
   recalc();
   document.querySelector("#sets")?.scrollIntoView({ behavior: "smooth", block: "start" });
 });
